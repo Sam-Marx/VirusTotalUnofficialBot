@@ -9,3 +9,5 @@ VirusTotal unofficial bot made by Sam Marx (https://t.me/SamMarx). The bot is us
 | url  | Analyze a domain |
 
 ## Screenshots:
+![Analyzing](LyQhM6Dwkj.png)
+Analyzing a file
