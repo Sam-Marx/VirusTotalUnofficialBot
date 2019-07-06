@@ -39,6 +39,7 @@ def download_file(file_path, file_name):
 
 		return file
 
+#@run_async
 def hash_scan(_hash):
 	try:
 		#analyze a hash
@@ -51,7 +52,15 @@ def hash_scan(_hash):
 		hash_js = json.dumps(r.json())
 		hash_js = json.loads(hash_js)
 
-		basic_data = '''
+		if hash_js['verbose_msg'] == 'Your resource is queued for analysis':
+			new_message = '''
+<b>Message: </b>{verbose_msg}
+<b>MD5: </b>{md5}
+'''.format(verbose_msg=hash_js['verbose_msg'],
+		md5=hash_js['resource'])
+			return new_message
+		else:
+			basic_data = '''
 <b>MD5: </b>{md5}
 <b>Positives: </b>{positives}
 <b>Scan date: </b>{scan_date}
@@ -59,13 +68,13 @@ def hash_scan(_hash):
 		positives=hash_js['positives'],
 		scan_date=hash_js['scan_date'])
 
-		return basic_data
-		print(basic_data)
+			print(basic_data)
+			return basic_data
 
 	except Exception as e:
 		print('Error: ' + str(e))
 
-
+#@run_async
 def get_file_scan(bot, update):
 	try:
 		url = 'https://virustotal.com/vtapi/v2/file/scan'
@@ -81,10 +90,13 @@ def get_file_scan(bot, update):
 		doc_name = js['file_path'].split('/')[-1]
 
 		upload_file = download_file(doc_path, doc_name)
+		print(os.system('dir'))
 
-		files = {'file':(doc_name, open(doc_name, 'rb'))}
+		open_file = open(doc_name, 'rb')
+		files = {'file':(doc_name, open_file)}
 
 		r = requests.post(url, files=files, params=params)
+		open_file.close()
 		file_js = json.loads(r.text)
 
 		basic_data = '''
@@ -99,6 +111,8 @@ def get_file_scan(bot, update):
 		sha1=file_js['sha1'],
 		sha256=file_js['sha256'],
 		md5=file_js['md5'])
+
+		print(basic_data)
 	
 		button = [[InlineKeyboardButton('Access permalink', url=file_js['permalink'])]]
 		button_link = InlineKeyboardMarkup(button)
@@ -107,11 +121,7 @@ def get_file_scan(bot, update):
 
 		bot.edit_message_text(parse_mode='HTML', chat_id=update.message.chat_id, text=hash_scan(file_js['md5']), message_id=msg.message_id, reply_to_message_id=update.message.message_id, reply_markup=button_link)
 
-		try:
-			os.remove(doc_name)
-		except Exception:
-			pass
-
+		os.remove(doc_name)
 	except Exception as e:
 		if e == 'File is too big':
 			bot.send_message(parse_mode='HTML', chat_id=update.message.chat_id, text='<b>File is too big.</b>', reply_to_message_id=update.message.message_id)
