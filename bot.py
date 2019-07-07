@@ -4,9 +4,7 @@
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, File
-from telegram.ext.dispatcher import run_async
 from telegram.error import NetworkError, Unauthorized, BadRequest
-from pprint import pprint
 import requests
 import json
 import os
@@ -20,7 +18,28 @@ API_TOKEN = os.getenv('TOKEN')
 #Virus Total api key
 VIRUS_TOTAL_APIKEY = os.getenv('VIRUS_TOTAL_API')
 
+#MODE = DEV / PROD
+mode = os.getenv('MODE')
+
 logging.basicConfig(level=logging.INFO)
+
+if mode == 'dev':
+	def run(updater):
+		updater.start_polling()
+		updater.idle()
+
+elif mode == 'prod':
+	def run(updater):
+		PORT = int(os.environ.get('PORT', '8443'))
+		HEROKU_APP_NAME = os.environ.get('HEROKU_APP_NAME')
+
+		updater.start_webhook(listen='0.0.0.0',
+			port=PORT,
+			url_path=API_TOKEN)
+		updater.bot.set_webhook('https://{}.herokuapp.com/{}'.format(HEROKU_APP_NAME, API_TOKEN))
+else:
+	logging.error('MODE NOT FOUND')
+	sys.exit()
 
 def get_help(bot, update):
 	#show help/commands
@@ -68,7 +87,7 @@ def hash_scan(_hash):
 		positives=hash_js['positives'],
 		scan_date=hash_js['scan_date'])
 
-			print(basic_data)
+			#print(basic_data)
 			return basic_data
 
 	except Exception as e:
@@ -90,7 +109,7 @@ def get_file_scan(bot, update):
 		doc_name = js['file_path'].split('/')[-1]
 
 		upload_file = download_file(doc_path, doc_name)
-		print(os.system('dir'))
+		#print(os.system('dir'))
 
 		open_file = open(doc_name, 'rb')
 		files = {'file':(doc_name, open_file)}
@@ -112,7 +131,7 @@ def get_file_scan(bot, update):
 		sha256=file_js['sha256'],
 		md5=file_js['md5'])
 
-		print(basic_data)
+		#print(basic_data)
 	
 		button = [[InlineKeyboardButton('Access permalink', url=file_js['permalink'])]]
 		button_link = InlineKeyboardMarkup(button)
@@ -194,8 +213,7 @@ def main():
 	#filtering documents
 	dispatcher.add_handler(MessageHandler(Filters.document, get_file_scan))
 
-	updater.start_polling()
-	updater.idle()
+	run(updater)
 
 if __name__ == '__main__':
 	main()
