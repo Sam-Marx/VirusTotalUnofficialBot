@@ -81,7 +81,7 @@ def hash_scan(_hash):
 		else:
 			basic_data = '''
 <b>MD5: </b>{md5}
-<b>Positives: </b>{positives}
+<b>Positives: </b>{positives}/70
 <b>Scan date: </b>{scan_date}
 '''.format(md5=hash_js['md5'],
 		positives=hash_js['positives'],
@@ -185,10 +185,11 @@ def get_hash_report(bot, update, args):
 
 		hash_js = json.dumps(r.json())
 		hash_js = json.loads(hash_js)
+		print(hash_js)
 
 		basic_data = '''
 <b>MD5: </b>{md5}
-<b>Positives: </b>{positives}
+<b>Positives: </b>{positives}/70
 <b>Scan date: </b>{scan_date}
 '''.format(md5=hash_js['md5'],
 		positives=hash_js['positives'],
