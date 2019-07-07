@@ -104,13 +104,12 @@ def get_file_scan(bot, update):
 		doc_info = doc_info.replace("'", '"')
 
 		js = json.loads(doc_info)
+		print(js)
 		doc_id = js['file_id']
 		doc_path = js['file_path']
 		doc_name = js['file_path'].split('/')[-1]
 
 		upload_file = download_file(doc_path, doc_name)
-		#print(os.system('dir'))
-
 		open_file = open(doc_name, 'rb')
 		files = {'file':(doc_name, open_file)}
 
@@ -142,8 +141,6 @@ def get_file_scan(bot, update):
 
 		os.remove(doc_name)
 	except Exception as e:
-		if e == 'File is too big':
-			bot.send_message(parse_mode='HTML', chat_id=update.message.chat_id, text='<b>File is too big.</b>', reply_to_message_id=update.message.message_id)
 		print('Erro: ' + str(e))
 
 def get_domain_scan(bot, update, args):
