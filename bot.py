@@ -106,18 +106,23 @@ def get_file_scan(bot, update):
 		js = json.loads(doc_info)
 		print(js)
 		doc_id = js['file_id']
+		doc_size = js['file_size'] #em bytes
 		doc_path = js['file_path']
 		doc_name = js['file_path'].split('/')[-1]
 
-		upload_file = download_file(doc_path, doc_name)
-		open_file = open(doc_name, 'rb')
-		files = {'file':(doc_name, open_file)}
+		if int(doc_size) > 30000000:
+			bot.send_message(parse_mode='HTML', chat_id=update.message.chat_id, text='<b>File is too big. The public API is limited to 32mb.</b>', reply_to_message_id=update.message.message_id)
+			pass
+		else:
+			upload_file = download_file(doc_path, doc_name)
+			open_file = open(doc_name, 'rb')
+			files = {'file':(doc_name, open_file)}
 
-		r = requests.post(url, files=files, params=params)
-		open_file.close()
-		file_js = json.loads(r.text)
+			r = requests.post(url, files=files, params=params)
+			open_file.close()
+			file_js = json.loads(r.text)
 
-		basic_data = '''
+			basic_data = '''
 <b>{verbose_msg}</b>
 
 <b>Scan ID: </b>{scan_id}
@@ -129,17 +134,15 @@ def get_file_scan(bot, update):
 		sha1=file_js['sha1'],
 		sha256=file_js['sha256'],
 		md5=file_js['md5'])
-
-		#print(basic_data)
 	
-		button = [[InlineKeyboardButton('Access permalink', url=file_js['permalink'])]]
-		button_link = InlineKeyboardMarkup(button)
+			button = [[InlineKeyboardButton('Access permalink', url=file_js['permalink'])]]
+			button_link = InlineKeyboardMarkup(button)
 
-		msg = bot.send_message(parse_mode='HTML', chat_id=update.message.chat_id, text=basic_data, reply_to_message_id=update.message.message_id, reply_markup=button_link)
+			msg = bot.send_message(parse_mode='HTML', chat_id=update.message.chat_id, text=basic_data, reply_to_message_id=update.message.message_id, reply_markup=button_link)
 
-		bot.edit_message_text(parse_mode='HTML', chat_id=update.message.chat_id, text=hash_scan(file_js['md5']), message_id=msg.message_id, reply_to_message_id=update.message.message_id, reply_markup=button_link)
+			bot.edit_message_text(parse_mode='HTML', chat_id=update.message.chat_id, text=hash_scan(file_js['md5']), message_id=msg.message_id, reply_to_message_id=update.message.message_id, reply_markup=button_link)
 
-		os.remove(doc_name)
+			os.remove(doc_name)
 	except Exception as e:
 		print('Erro: ' + str(e))
 
