@@ -72,12 +72,19 @@ def hash_scan(_hash):
 		hash_js = json.loads(hash_js)
 
 		if hash_js['verbose_msg'] == 'Your resource is queued for analysis':
-			new_message = '''
+			try:
+				new_message = '''
 <b>Message: </b>{verbose_msg}
 <b>MD5: </b>{md5}
-'''.format(verbose_msg=hash_js['verbose_msg'],
-		md5=hash_js['resource'])
-			return new_message
+	'''.format(verbose_msg=hash_js['verbose_msg'],
+				md5=hash_js['md5'])
+				return new_message
+			except Exception as e:
+				print(e)
+				new_message = '''
+<b>Message: </b>{verbose_msg}
+	'''.format(verbose_msg=hash_js['verbose_msg'])
+				return new_message
 		else:
 			basic_data = '''
 <b>MD5: </b>{md5}
@@ -110,8 +117,9 @@ def get_file_scan(bot, update):
 		doc_path = js['file_path']
 		doc_name = js['file_path'].split('/')[-1]
 
-		if int(doc_size) > 32000000:
+		if int(doc_size) > 30000000:
 			bot.send_message(parse_mode='HTML', chat_id=update.message.chat_id, text='<b>File is too big. The public API is limited to 32mb.</b>', reply_to_message_id=update.message.message_id)
+			pass
 		else:
 			upload_file = download_file(doc_path, doc_name)
 			open_file = open(doc_name, 'rb')
@@ -143,7 +151,6 @@ def get_file_scan(bot, update):
 
 			os.remove(doc_name)
 	except Exception as e:
-		bot.send_message(parse_mode='HTML', chat_id=update.message.chat_id, text='<b>File is too big. The public API is limited to 32mb.</b>', reply_to_message_id=update.message.message_id)
 		print('Erro: ' + str(e))
 
 def get_domain_scan(bot, update, args):
